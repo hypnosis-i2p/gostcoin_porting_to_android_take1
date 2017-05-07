@@ -24,9 +24,14 @@
 
 // Anoncoin
 // For writing config file
+#ifndef ANDROID
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/property_tree/detail/info_parser_error.hpp>
+#else
+//GostCoin
+#include <QSettings>
+#endif
 
 // Work around clang compilation problem in Boost 1.46:
 // /usr/include/boost/program_options/detail/config_file.hpp:163:17: error: call to function 'to_internal' that is neither visible in the template definition nor found by argument-dependent lookup
@@ -977,9 +982,9 @@ bool WildcardMatch(const string& str, const string& mask)
 }
 
 
+#ifndef ANDROID
 // Anoncoin
 // Write config file
-
 bool writeConfig(boost::filesystem::path configFile, boost::property_tree::ptree data)
 {
     // Write file
@@ -994,10 +999,12 @@ bool writeConfig(boost::filesystem::path configFile, boost::property_tree::ptree
     }
     return true;
 }
+#endif
 
 // call upon first run
 bool writeFirstConfig(bool i2pOnlyEnabled, bool i2pEnabled)
 {
+#ifndef ANDROID
     using boost::property_tree::ptree;
     ptree pt;
 
@@ -1014,6 +1021,30 @@ bool writeFirstConfig(bool i2pOnlyEnabled, bool i2pEnabled)
 
     // Write file
     return writeConfig(GetConfigFile().string().c_str(), pt);
+#else //ANDROID follows
+    QSettings pt(GetConfigFile().string().c_str(), QSettings::Format::NativeFormat);
+    if (i2pOnlyEnabled)
+        pt.setValue("onlynet", "i2p");
+    if (torOnlyEnabled)
+    {
+        pt.setValue("tor", "127.0.0.1:9050");
+        pt.setValue("onlynet", "tor");
+    }
+    if (i2pEnabled)
+        pt.setValue("i2p", 1);
+    if (torEnabled)
+        pt.setValue("proxy", "127.0.0.1:9050");
+    unsigned char rand_pwd[32];
+    RAND_bytes(rand_pwd, 32);
+    pt.setValue("rpcuser", "gostcoinrpc");
+    pt.setValue("rpcpassword", EncodeBase58(&rand_pwd[0],&rand_pwd[0]+32).c_str());
+    pt.setValue("daemon", 1);
+    pt.setValue("server", 1);
+
+    // Write file
+    //sync() is called automatically from QSettings's destructor and by the event loop at regular intervals, so you normally don't need to call it yourself.
+    return true;
+#endif
 }
 
 
@@ -1272,7 +1303,8 @@ void AllocateFileRange(FILE *file, unsigned int offset, unsigned int length) {
         fcntl(fileno(file), F_PREALLOCATE, &fst);
     }
     ftruncate(fileno(file), fst.fst_length);
-#elif defined(__linux__)
+#elif defined(__linux__) && !defined(ANDROID)
+    //Android 9 doesn't have posix_fallocate
     // Version using posix_fallocate
     off_t nEndPos = (off_t)offset + length;
     posix_fallocate(fileno(file), 0, nEndPos);

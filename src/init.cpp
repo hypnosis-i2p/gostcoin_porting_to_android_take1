@@ -1200,25 +1200,34 @@ bool AppInit2(boost::thread_group& threadGroup)
     StartNode(threadGroup);
 
     // InitRPCMining is needed here so getwork/getblocktemplate in the GUI debug console works properly.
+    printf("before InitRPCMining()");
     InitRPCMining();
-    if (fServer)
+    if (fServer) {
+        printf("before StartRPCThreads()");
         StartRPCThreads();
+    }
 
     // Generate coins in the background
-    if (pwalletMain)
+    if (pwalletMain) {
+        printf("before GenerateBitcoins(...)");
         GenerateBitcoins(GetBoolArg("-gen", false), pwalletMain);
+    }
 
     // ********************************************************* Step 12: finished
 
+    printf("before InitMessage(Done loading)");
     uiInterface.InitMessage(_("Done loading"));
 
     if (pwalletMain) {
         // Add wallet transactions that aren't already in a block to mapTransactions
+        printf("before ReacceptWalletTransactions()");
         pwalletMain->ReacceptWalletTransactions();
 
         // Run a thread to flush wallet periodically
+        printf("before threadGroup.create_thread(ThreadFlushWalletDB)");
         threadGroup.create_thread(boost::bind(&ThreadFlushWalletDB, boost::ref(pwalletMain->strWalletFile)));
     }
 
+    printf("before return !fRequestShutdown");
     return !fRequestShutdown;
 }

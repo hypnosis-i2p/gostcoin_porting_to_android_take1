@@ -39,9 +39,103 @@ contains(RELEASE, 1) {
     }
 }
 
+android {
+        message("Using Android settings")
+
+
+        # change to your own path, where you will store all needed libraries with 'git clone' commands below.
+        MAIN_PATH = /path/to/libraries
+        # change to your own Android NDK path
+        NDK_PATH = /home/user/SDKS/ANDROID/NDK/android-ndk-r13b
+        #boost 53, 62 are not ok
+        #change to your boost 1.57 path
+        BOOST_PATH = $$MAIN_PATH/boost_1_57_0
+
+        # git clone https://github.com/PurpleI2P/Boost-for-Android-Prebuilt.git
+        # git clone https://github.com/PurpleI2P/OpenSSL-for-Android-Prebuilt.git
+        # git clone https://github.com/PurpleI2P/MiniUPnP-for-Android-Prebuilt.git
+        # git clone https://github.com/PurpleI2P/android-ifaddrs.git
+        OPENSSL_PATH = $$MAIN_PATH/OpenSSL-for-Android-Prebuilt/openssl-1.0.2
+        #MINIUPNP_PATH = $$MAIN_PATH/MiniUPnP-for-Android-Prebuilt
+        IFADDRS_PATH = $$MAIN_PATH/android-ifaddrs
+        BDB_PATH = $$MAIN_PATH/bdb/db-6.0.20/build_unix
+
+
+        DEFINES += ANDROID=1
+        DEFINES += __ANDROID__
+
+        CONFIG += mobility
+
+        MOBILITY =
+
+        INCLUDEPATH += \
+                $$NDK_PATH/sources/cxx-stl/gnu-libstdc++/4.9/include \
+                $$BOOST_PATH \
+                $$OPENSSL_PATH/include \
+                $$IFADDRS_PATH \
+                $$BDB_PATH \
+                build
+
+#\
+#		$$MINIUPNP_PATH/miniupnp-2.0/include \
+#	DISTFILES += android/AndroidManifest.xml
+
+#	ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
+
+        SOURCES += $$IFADDRS_PATH/ifaddrs.cpp $$IFADDRS_PATH/bionic_netlink.cpp
+        HEADERS += $$IFADDRS_PATH/ifaddrs.h $$IFADDRS_PATH/ErrnoRestorer.h $$IFADDRS_PATH/bionic_netlink.h $$IFADDRS_PATH/bionic_macros.h
+
+        equals(ANDROID_TARGET_ARCH, armeabi-v7a){
+                DEFINES += ANDROID_ARM7A
+                # http://stackoverflow.com/a/30235934/529442
+                LIBS += -L$$BOOST_PATH/stage/lib \
+                        -lboost_atomic-gcc-mt-1_57 \
+                        -lboost_chrono-gcc-mt-1_57 \
+                        -lboost_filesystem-gcc-mt-1_57 \
+                        -lboost_program_options-gcc-mt-1_57 \
+                        -lboost_system-gcc-mt-1_57 \
+                        -lboost_thread-gcc-mt-1_57 \
+                        -L$$OPENSSL_PATH/armeabi-v7a/lib/ -lcrypto -lssl
+#\
+#			-L$$MINIUPNP_PATH/miniupnp-2.0/armeabi-v7a/lib/ -lminiupnpc
+
+                PRE_TARGETDEPS += $$OPENSSL_PATH/armeabi-v7a/lib/libcrypto.a \
+                        $$OPENSSL_PATH/armeabi-v7a/lib/libssl.a
+                DEPENDPATH += $$OPENSSL_PATH/include
+
+                ANDROID_EXTRA_LIBS += $$OPENSSL_PATH/armeabi-v7a/lib/libcrypto_1_0_0.so \
+                        $$OPENSSL_PATH/armeabi-v7a/lib/libssl_1_0_0.so
+#\
+#			$$MINIUPNP_PATH/miniupnp-2.0/armeabi-v7a/lib/libminiupnpc.so
+        }
+
+        equals(ANDROID_TARGET_ARCH, x86){
+                error("Android BDB: don't know how to build BDB for Android x86")
+
+                # http://stackoverflow.com/a/30235934/529442
+                LIBS += -L$$BOOST_PATH/boost_1_62_0/x86/lib \
+                        -lboost_system-gcc-mt-1_62 -lboost_date_time-gcc-mt-1_62 \
+                        -lboost_filesystem-gcc-mt-1_62 -lboost_program_options-gcc-mt-1_62 \
+                        -L$$OPENSSL_PATH/openssl-1.1.0/x86/lib/ -lcrypto -lssl
+#\
+#			-L$$MINIUPNP_PATH/miniupnp-2.0/x86/lib/ -lminiupnpc
+
+                PRE_TARGETDEPS += $$OPENSSL_PATH/openssl-1.1.0/x86/lib/libcrypto.a \
+                        $$OPENSSL_PATH/openssl-1.1.0/x86/lib/libssl.a
+
+                DEPENDPATH += $$OPENSSL_PATH/openssl-1.1.0/include
+
+                ANDROID_EXTRA_LIBS += $$OPENSSL_PATH/openssl-1.1.0/x86/lib/libcrypto_1_0_0.so \
+                        $$OPENSSL_PATH/openssl-1.1.0/x86/lib/libssl_1_0_0.so
+#\
+#			$$MINIUPNP_PATH/miniupnp-2.0/x86/lib/libminiupnpc.so
+        }
+}
+
 !win32 {
     # for extra security against potential buffer overflows: enable GCCs Stack Smashing Protection
     QMAKE_CXXFLAGS *= -fstack-protector-all
+    QMAKE_CFLAGS *= -fstack-protector-all
     QMAKE_LFLAGS *= -fstack-protector-all
     # Exclude on Windows cross compile with MinGW 4.2.x, as it will result in a non-working executable!
     # This can be enabled for Windows, when we switch to MinGW >= 4.4.x.
@@ -93,7 +187,11 @@ INCLUDEPATH += src/leveldb/include src/leveldb/helpers
 LIBS += $$PWD/src/leveldb/libleveldb.a $$PWD/src/leveldb/libmemenv.a
 !win32 {
     # we use QMAKE_CXXFLAGS_RELEASE even without RELEASE=1 because we use RELEASE to indicate linking preferences not -O preferences
-    genleveldb.commands = cd $$PWD/src/leveldb && CC=$$QMAKE_CC CXX=$$QMAKE_CXX $(MAKE) OPT=\"$$QMAKE_CXXFLAGS $$QMAKE_CXXFLAGS_RELEASE\" libleveldb.a libmemenv.a
+    android {
+        genleveldb.commands = cd $$PWD/src/leveldb && TARGET_OS=OS_ANDROID_CROSSCOMPILE CC=$$QMAKE_CC CXX=$$QMAKE_CXX AR=$$NDK_PATH/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin/arm-linux-androideabi-ar $(MAKE) OPT=\"-I $$NDK_PATH/platforms/android-9/arch-arm/usr/include/ -I $$NDK_PATH/sources/cxx-stl/gnu-libstdc++/4.9/include -I $$NDK_PATH/sources/cxx-stl/gnu-libstdc++/4.9/libs/armeabi-v7a/include/ $$QMAKE_CXXFLAGS $$QMAKE_CXXFLAGS_RELEASE\" libleveldb.a libmemenv.a
+    } else {
+        genleveldb.commands = cd $$PWD/src/leveldb && CC=$$QMAKE_CC CXX=$$QMAKE_CXX $(MAKE) OPT=\"$$QMAKE_CXXFLAGS $$QMAKE_CXXFLAGS_RELEASE\" libleveldb.a libmemenv.a
+    }
 } else {
     # make an educated guess about what the ranlib command is called
     isEmpty(QMAKE_RANLIB) {
@@ -333,8 +431,10 @@ QMAKE_EXTRA_COMPILERS += gccsse2
 #SOURCES_SSE2 += src/scrypt-sse2.cpp
 }
 
-# Todo: Remove this line when switching to Qt5, as that option was removed
-CODECFORTR = UTF-8
+greaterThan(QT_MAJOR_VERSION, 4): {
+} else {
+    CODECFORTR = UTF-8
+}
 
 # for lrelease/lupdate
 # also add new translations to src/qt/bitcoin.qrc under translations/
@@ -381,6 +481,7 @@ isEmpty(BDB_LIB_PATH) {
 
 isEmpty(BDB_LIB_SUFFIX) {
     macx:BDB_LIB_SUFFIX = -4.8
+    android:BDB_LIB_SUFFIX = -6.0
 }
 
 isEmpty(BDB_INCLUDE_PATH) {
@@ -413,8 +514,14 @@ win32:!contains(MINGW_THREAD_BUGFIX, 0) {
 }
 
 !win32:!macx {
-    DEFINES += LINUX
-    LIBS += -lrt
+    !android {
+        DEFINES += LINUX
+        LIBS += -lrt
+    }
+    android {
+        #LIBS += $$BDB_PATH/libdb.a $$BDB_PATH/libdb_cxx.a
+        LIBS += -L$$BDB_PATH
+    }
     # _FILE_OFFSET_BITS=64 lets 32-bit fopen transparently support large files.
     DEFINES += _FILE_OFFSET_BITS=64
 }
@@ -435,9 +542,14 @@ LIBS += $$join(BOOST_LIB_PATH,,-L,) $$join(BDB_LIB_PATH,,-L,) $$join(OPENSSL_LIB
 LIBS += -lssl -lcrypto -ldb_cxx$$BDB_LIB_SUFFIX -lz
 # -lgdi32 has to happen after -lcrypto (see  #681)
 win32:LIBS += -lws2_32 -lshlwapi -lmswsock -lole32 -loleaut32 -luuid -lgdi32
-LIBS += -lboost_system$$BOOST_LIB_SUFFIX -lboost_filesystem$$BOOST_LIB_SUFFIX -lboost_program_options$$BOOST_LIB_SUFFIX -lboost_thread$$BOOST_THREAD_LIB_SUFFIX 
+!android{LIBS += -lboost_system$$BOOST_LIB_SUFFIX -lboost_filesystem$$BOOST_LIB_SUFFIX -lboost_program_options$$BOOST_LIB_SUFFIX -lboost_thread$$BOOST_THREAD_LIB_SUFFIX}
 win32:LIBS += -lboost_chrono$$BOOST_LIB_SUFFIX
 macx:LIBS += -lboost_chrono$$BOOST_LIB_SUFFIX
+
+android {
+    CXXFLAGS += -O0 -g
+    LIBS += $$NDK_PATH/sources/cxx-stl/stlport/libs/armeabi-v7a/libstlport_static.a
+}
 
 contains(RELEASE, 1) {
     !win32:!macx {
@@ -449,4 +561,27 @@ contains(RELEASE, 1) {
 !win32:LIBS += -ldl
 
 
+android {
+    LIBS += -Wl,-Bdynamic
+    LIBS +=$$BDB_PATH/libdb_cxx.a $$BDB_PATH/libdb.a
+}
+
 system($$QMAKE_LRELEASE -silent $$TRANSLATIONS)
+
+android {
+    DISTFILES += \
+        android/AndroidManifest.xml \
+        android/gradle/wrapper/gradle-wrapper.jar \
+        android/gradlew \
+        android/res/values/libs.xml \
+        android/build.gradle \
+        android/gradle/wrapper/gradle-wrapper.properties \
+        android/gradlew.bat
+
+    ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
+}
+
+DISTFILES += \
+    ../../../../../path/to/libraries/android-ifaddrs/ifaddrs.old.cpp.txt \
+    ../../../../../path/to/libraries/android-ifaddrs/ifaddrs.old.h.txt \
+    ../../../../../path/to/libraries/android-ifaddrs/README.md

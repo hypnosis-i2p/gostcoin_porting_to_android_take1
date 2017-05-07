@@ -4,9 +4,9 @@
 #ifndef _BITCOIN_ADDRMAN
 #define _BITCOIN_ADDRMAN 1
 
+#include "util.h"
 #include "netbase.h"
 #include "protocol.h"
-#include "util.h"
 #include "sync.h"
 
 

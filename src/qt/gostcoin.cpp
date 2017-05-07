@@ -34,6 +34,13 @@
 #include <QTranslator>
 #include <QLibraryInfo>
 
+#ifdef ANDROID
+//for setenv("QT_USE_ANDROID_NATIVE_DIALOGS", GOSTCOIN_NO_NATIVE_ANDROID_DIALOGS, GOSTCOIN_SETENV_OVERWRITE);
+#include <stdlib.h>
+#define GOSTCOIN_NO_NATIVE_ANDROID_DIALOGS "0"
+#define GOSTCOIN_SETENV_OVERWRITE 1
+#endif
+
 #ifdef Q_OS_MAC
 #include "macdockiconhandler.h"
 #endif
@@ -170,6 +177,11 @@ int main(int argc, char *argv[])
 
     Q_INIT_RESOURCE(bitcoin);
     QApplication app(argc, argv);
+
+#ifdef ANDROID
+    //workaround for https://bugreports.qt.io/browse/QTBUG-35545
+    setenv("QT_USE_ANDROID_NATIVE_DIALOGS", GOSTCOIN_NO_NATIVE_ANDROID_DIALOGS, GOSTCOIN_SETENV_OVERWRITE);
+#endif
 
     // Register meta types used for QMetaObject::invokeMethod
     qRegisterMetaType< bool* >();
@@ -378,9 +390,12 @@ int main(int argc, char *argv[])
         }
     } catch (std::exception& e) {
         handleRunawayException(&e);
-    } catch (...) {
+    }
+#ifndef ANDROID
+     catch (...) {
         handleRunawayException(NULL);
     }
+#endif
     return 0;
 }
 #endif // BITCOIN_QT_TEST

@@ -5,6 +5,8 @@
 #ifndef BITCOIN_NET_H
 #define BITCOIN_NET_H
 
+#include "addrman.h"
+
 #include <deque>
 #include <boost/array.hpp>
 #include <boost/foreach.hpp>
@@ -18,7 +20,6 @@
 #include "limitedmap.h"
 #include "netbase.h"
 #include "protocol.h"
-#include "addrman.h"
 #include "hash.h"
 #include "bloom.h"
 

@@ -2,6 +2,9 @@
 // Copyright (c) 2009-2012 The Bitcoin developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+#ifdef ANDROID
+#include <QDebug>
+#endif
 
 #include "db.h"
 #include "net.h"
@@ -1789,8 +1792,11 @@ bool BindListenPort(const CService &addrBind, string& strError)
 
 void static Discover()
 {
-    if (!fDiscover)
+    printf("entered Discover()\n");
+    if (!fDiscover) {
+        printf("!fDiscover, leaving Discover()\n");
         return;
+    }
 
 #ifdef WIN32
     // Get local host IP
@@ -1808,9 +1814,12 @@ void static Discover()
     }
 #else
     // Get local host ip
-    struct ifaddrs* myaddrs;
+    struct ifaddrs* __attribute__ ((aligned)) myaddrs;
+    printf("before getifaddrs\n");
+    qDebug() << "before getifaddrs";
     if (getifaddrs(&myaddrs) == 0)
     {
+        printf("before for ifa\n");
         for (struct ifaddrs* ifa = myaddrs; ifa != NULL; ifa = ifa->ifa_next)
         {
             if (ifa->ifa_addr == NULL) continue;
@@ -1821,6 +1830,7 @@ void static Discover()
             {
                 struct sockaddr_in* s4 = (struct sockaddr_in*)(ifa->ifa_addr);
                 CNetAddr addr(s4->sin_addr);
+                printf("before AddLocal 4\n");
                 if (AddLocal(addr, LOCAL_IF))
                     printf("IPv4 %s: %s\n", ifa->ifa_name, addr.ToString().c_str());
             }
@@ -1829,32 +1839,46 @@ void static Discover()
             {
                 struct sockaddr_in6* s6 = (struct sockaddr_in6*)(ifa->ifa_addr);
                 CNetAddr addr(s6->sin6_addr);
+                printf("before AddLocal 6\n");
                 if (AddLocal(addr, LOCAL_IF))
                     printf("IPv6 %s: %s\n", ifa->ifa_name, addr.ToString().c_str());
             }
 #endif
         }
+        printf("before freeifaddrs\n");
         freeifaddrs(myaddrs);
     }
 #endif
 
     // Don't use external IPv4 discovery, when -onlynet="IPv6"
-    if (!IsLimited(NET_IPV4))
+    printf("before IsLimited\n");
+    if (!IsLimited(NET_IPV4)) {
+        printf("before NewThread ThreadGetMyExternalIP\n");
         NewThread(ThreadGetMyExternalIP, NULL);
+    }
+    printf("leaving Discover()\n");
 }
 
 void StartNode(boost::thread_group& threadGroup)
 {
+    printf("enter StartNode()\n");
+
     if (semOutbound == NULL) {
         // initialize semaphore
+        printf("before int nMaxOutbound\n");
         int nMaxOutbound = min(MAX_OUTBOUND_CONNECTIONS, nMaxConnections);
+        printf("before new CSemaphore(nMaxOutbound)\n");
         semOutbound = new CSemaphore(nMaxOutbound);
     }
 
-    if (pnodeLocalHost == NULL)
+    if (pnodeLocalHost == NULL) {
+        printf("before new CNode\n");
         pnodeLocalHost = new CNode(INVALID_SOCKET, CAddress(CService("127.0.0.1", 0), nLocalServices));
+    }
 
+    printf("before Discover()\n");
     Discover();
+    printf("after Discover()\n");
 
     //
     // Start threads
@@ -1862,28 +1886,37 @@ void StartNode(boost::thread_group& threadGroup)
 
     if (!GetBoolArg("-dnsseed", true))
         printf("DNS seeding disabled\n");
-    else
+    else {
+        printf("before threadGroup.create_thread(TraceThread dnsseed)\n");
         threadGroup.create_thread(boost::bind(&TraceThread<boost::function<void()> >, "dnsseed", &ThreadDNSAddressSeed));
+    }
 
     // Send and receive from sockets, accept connections
+    printf("before threadGroup.create_thread(TraceThread net)\n");
     threadGroup.create_thread(boost::bind(&TraceThread<void (*)()>, "net", &ThreadSocketHandler));
 
     // Initiate outbound connections from -addnode
+    printf("before threadGroup.create_thread(TraceThread addcon)\n");
     threadGroup.create_thread(boost::bind(&TraceThread<void (*)()>, "addcon", &ThreadOpenAddedConnections));
 
     // Initiate outbound connections
+    printf("before threadGroup.create_thread(TraceThread opencon)\n");
     threadGroup.create_thread(boost::bind(&TraceThread<void (*)()>, "opencon", &ThreadOpenConnections));
 
     // Process messages
+    printf("before threadGroup.create_thread(TraceThread msghand)\n");
     threadGroup.create_thread(boost::bind(&TraceThread<void (*)()>, "msghand", &ThreadMessageHandler));
 
     // Dump network addresses
+    printf("before threadGroup.create_thread(TraceThread dumpaddr)\n");
     threadGroup.create_thread(boost::bind(&LoopForever<void (*)()>, "dumpaddr", &DumpAddresses, DUMP_ADDRESSES_INTERVAL * 1000));
+
+    printf("leaving StartNode()\n");
 }
 
 bool StopNode()
 {
-    printf("StopNode()\n");
+    printf("entered StopNode()\n");
     GenerateBitcoins(false, NULL);
     nTransactionsUpdated++;
     if (semOutbound)

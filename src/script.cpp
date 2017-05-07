@@ -2,6 +2,8 @@
 // Copyright (c) 2009-2012 The Bitcoin developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+#include "util.h"
+
 #include <boost/foreach.hpp>
 #include <boost/tuple/tuple.hpp>
 
@@ -14,7 +16,6 @@ using namespace boost;
 #include "key.h"
 #include "main.h"
 #include "sync.h"
-#include "util.h"
 #include "Gost.h"
 
 bool CheckSig(vector<unsigned char> vchSig, const vector<unsigned char> &vchPubKey, const CScript &scriptCode, const CTransaction& txTo, unsigned int nIn, int nHashType, int flags);

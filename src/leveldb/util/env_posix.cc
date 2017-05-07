@@ -28,6 +28,15 @@
 #include "util/mutexlock.h"
 #include "util/posix_logger.h"
 
+#if defined(OS_MACOSX) || defined(OS_SOLARIS) || defined(OS_FREEBSD) ||\
+    defined(OS_NETBSD) || defined(OS_OPENBSD) || defined(OS_DRAGONFLYBSD) ||\
+    defined(ANDROID) || defined(OS_HPUX) || defined(CYGWIN)
+// Use fread/fwrite/fflush on platforms without _unlocked variants
+#define fread_unlocked fread
+#define fwrite_unlocked fwrite
+#define fflush_unlocked fflush
+#endif
+
 namespace leveldb {
 
 namespace {

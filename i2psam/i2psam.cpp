@@ -2,6 +2,11 @@
 // Copyright (c) 2017 orignal
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+#ifdef ANDROID
+#include <QDebug>
+#endif
+
 //--------------------------------------------------------------------------------------------------
 // EdDSA assumed
 #include "i2psam.h"
@@ -588,7 +593,10 @@ std::ostream& StreamSession::getLogStream ()
 
 void StreamSession::SetLogFile (const std::string& filename)
 {
-	logStream = std::make_shared<std::ofstream> (filename, std::ofstream::out | std::ofstream::trunc);
+#ifdef ANDROID
+    qDebug() << "LOGFILE: " << filename.c_str();
+#endif
+    logStream = std::make_shared<std::ofstream> (filename, std::ofstream::out | std::ofstream::trunc);
 }
 
 void StreamSession::CloseLogFile ()

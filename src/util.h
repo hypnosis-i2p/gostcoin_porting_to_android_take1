@@ -5,6 +5,12 @@
 #ifndef BITCOIN_UTIL_H
 #define BITCOIN_UTIL_H
 
+#ifdef ANDROID
+//GostCoin
+#include <QSettings>
+#endif
+
+
 #include "uint256.h"
 
 #include <stdarg.h>
@@ -132,10 +138,10 @@ inline void MilliSleep(int64 n)
 
 
 // Gostcoin
+bool writeFirstConfig(bool i2pOnlyEnabled, bool torOnlyEnabled, bool i2pEnabled, bool torEnabled);
+#ifndef ANDROID
 bool WriteConfig(boost::filesystem::path configFile, boost::property_tree::ptree data);
-bool writeFirstConfig(bool i2pOnlyEnabled, bool i2pEnabled);
-
-
+#endif
 
 
 

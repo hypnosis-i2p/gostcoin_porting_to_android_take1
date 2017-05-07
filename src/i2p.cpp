@@ -7,6 +7,20 @@
 #include "util.h"
 #include "hash.h"
 
+#include "ostream"
+
+//#ifdef ANDROID
+//#   include <sstream>
+//#   define fakeCoutDeclare() std::stringstream fake_cout
+//#endif
+
+#ifdef ANDROID
+#include <QDebug>
+#   define log(a) qDebug() << a
+#else
+#   define log(a) std::cout << a
+#endif
+
 namespace SAM
 {
 
@@ -84,6 +98,7 @@ StreamSessionAdapter::~StreamSessionAdapter()
 	SAM::StreamSession::CloseLogFile ();
 }
 
+
 bool StreamSessionAdapter::StartSession (
         const std::string& nickname,
         const std::string& SAMHost       /*= SAM_DEFAULT_ADDRESS*/,
@@ -93,14 +108,17 @@ bool StreamSessionAdapter::StartSession (
         const std::string& minVer        /*= SAM_DEFAULT_MIN_VER*/,
         const std::string& maxVer        /*= SAM_DEFAULT_MAX_VER*/)
 {
-	std::cout << "Creating SAM session ..." << std::endl;
+    log("Connecting to SAM...\n");
+#ifdef ANDROID
+    log(QString("Connecting to SAM host:port ")+SAMHost.c_str()+":"+QString::number(SAMPort));
+#endif
 	auto s = std::make_shared<SAM::StreamSession>(nickname, SAMHost, SAMPort, myDestination, i2pOptions, minVer, maxVer);
 	sessionHolder_ = std::make_shared<SessionHolder>(s);
 	bool isReady = s->isReady ();
 	if (isReady)
-		std::cout << "SAM session created" << std::endl;
+        log("SAM connected\n");
 	else
-		std::cout << "SAM session failed" << std::endl;
+        log("SAM connection failed\n");
 	return isReady;
 }
 
