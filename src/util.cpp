@@ -3,6 +3,14 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#if defined(ANDROID)
+#include <QDebug>
+#include <QtAndroidExtras/QtAndroidExtras>
+#include <QString>
+#include <QStringList>
+#include <QSettings>
+#endif
+
 #ifndef WIN32
 // for posix_fallocate
 #ifdef __linux__
@@ -1023,23 +1031,15 @@ bool writeFirstConfig(bool i2pOnlyEnabled, bool i2pEnabled)
     return writeConfig(GetConfigFile().string().c_str(), pt);
 #else //ANDROID follows
     QSettings pt(GetConfigFile().string().c_str(), QSettings::Format::NativeFormat);
-    if (i2pOnlyEnabled)
-        pt.setValue("onlynet", "i2p");
-    if (torOnlyEnabled)
-    {
-        pt.setValue("tor", "127.0.0.1:9050");
-        pt.setValue("onlynet", "tor");
-    }
-    if (i2pEnabled)
-        pt.setValue("i2p", 1);
-    if (torEnabled)
-        pt.setValue("proxy", "127.0.0.1:9050");
+    pt.setValue("onlynet", "i2p");
+    pt.setValue("i2p", 1);
     unsigned char rand_pwd[32];
     RAND_bytes(rand_pwd, 32);
     pt.setValue("rpcuser", "gostcoinrpc");
     pt.setValue("rpcpassword", EncodeBase58(&rand_pwd[0],&rand_pwd[0]+32).c_str());
     pt.setValue("daemon", 1);
     pt.setValue("server", 1);
+    pt.setValue("rpcssl", 0);
 
     // Write file
     //sync() is called automatically from QSettings's destructor and by the event loop at regular intervals, so you normally don't need to call it yourself.
@@ -1099,25 +1099,58 @@ boost::filesystem::path GetDefaultDataDir()
     // Windows >= Vista: C:\Users\Username\AppData\Roaming\Bitcoin
     // Mac: ~/Library/Application Support/Bitcoin
     // Unix: ~/.bitcoin
+    // ANDROID: /sdcard/gostcoin
 #ifdef WIN32
     // Windows
     return GetSpecialFolderPath(CSIDL_APPDATA) / "Gostcoin";
 #else
+
     fs::path pathRet;
+
+#  if defined(ANDROID)
+    QAndroidJniObject mediaDir = QAndroidJniObject::callStaticObjectMethod("android/os/Environment", "getExternalStorageDirectory", "()Ljava/io/File;");
+    QAndroidJniObject mediaPath = mediaDir.callObjectMethod( "getAbsolutePath", "()Ljava/lang/String;" );
+    QString dataAbsPath = mediaPath.toString();
+    QAndroidJniEnvironment env;
+    if (env->ExceptionCheck()) {
+            // Handle exception here.
+            env->ExceptionClear();
+    }
+    std::string ext = dataAbsPath.toStdString();
+    //if (!ext) ext = "/sdcard";
+    if (boost::filesystem::exists(ext))
+    {
+        fs::path canonical = fs::canonical(fs::path(std::string (ext)));
+        pathRet = fs::path(std::string(canonical.c_str()) + "/gostcoin");
+        qDebug()<<"creating dir" << pathRet.c_str();
+        boost::filesystem::path dir=pathRet;
+        boost::filesystem::create_directory(dir);
+        return pathRet;
+    }
+    // otherwise use /data/.../files
+#  endif
+
     char* pszHome = getenv("HOME");
     if (pszHome == NULL || strlen(pszHome) == 0)
         pathRet = fs::path("/");
     else
         pathRet = fs::path(pszHome);
-#ifdef MAC_OSX
+#  ifdef MAC_OSX
     // Mac
     pathRet /= "Library/Application Support";
     fs::create_directory(pathRet);
     return pathRet / "Gostcoin";
-#else
+#  else
+
+#    if defined(ANDROID)
+    qDebug()<<"creating dir" << pathRet.c_str();
+    fs::create_directory(pathRet);
+    return pathRet;
+#    else
     // Unix
     return pathRet / ".gostcoin";
-#endif
+#    endif
+#  endif
 #endif
 }
 
@@ -1128,11 +1161,11 @@ const boost::filesystem::path &GetDataDir(bool fNetSpecific)
     static fs::path pathCached[2];
     static CCriticalSection csPathCached;
 
-    fs::path &path = pathCached[fNetSpecific];
+    fs::path &path = pathCached[fNetSpecific?0:1];
 
     // This can be called during exceptions by printf, so we cache the
     // value so we don't have to do memory allocations after that.
-    if (fCachedPath[fNetSpecific])
+    if (fCachedPath[fNetSpecific?0:1])
         return path;
 
     LOCK(csPathCached);
@@ -1154,7 +1187,7 @@ const boost::filesystem::path &GetDataDir(bool fNetSpecific)
 
     fs::create_directory(path);
 
-    fCachedPath[fNetSpecific] = true;
+    fCachedPath[fNetSpecific?0:1] = true;
     return path;
 }
 
@@ -1168,6 +1201,7 @@ boost::filesystem::path GetConfigFile()
 void ReadConfigFile(map<string, string>& mapSettingsRet,
                     map<string, vector<string> >& mapMultiSettingsRet)
 {
+#ifndef ANDROID
     boost::filesystem::ifstream streamConfig(GetConfigFile());
     if (!streamConfig.good())
         return; // No bitcoin.conf file is OK
@@ -1190,6 +1224,31 @@ void ReadConfigFile(map<string, string>& mapSettingsRet,
         }
         mapMultiSettingsRet[strKey].push_back(it->value[0]);
     }
+#else
+    QSettings pt(GetConfigFile().string().c_str(), QSettings::Format::NativeFormat);
+    // clear path cache after loading config file
+    fCachedPath[0] = fCachedPath[1] = false;
+
+    set<string> setOptions;
+    setOptions.insert("*");
+
+    QStringList keys = pt.allKeys();
+    for (QStringList::const_iterator it=keys.begin(); it!=keys.end(); ++it) {
+        QString qkey = *it;
+        QString qvalue = pt.value(qkey).toString();
+        std::string key = qkey.toStdString();
+        std::string value = qvalue.toStdString();
+        // Don't overwrite existing settings so command line settings override bitcoin.conf
+        string strKey = string("-") + key;
+        if (mapSettingsRet.count(strKey) == 0)
+        {
+            mapSettingsRet[strKey] = value;
+            // interpret nofoo=1 as foo=0 (and nofoo=0 as foo=1) as long as foo not set)
+            InterpretNegativeSetting(strKey, mapSettingsRet);
+        }
+        mapMultiSettingsRet[strKey].push_back(value);
+    }
+#endif
 }
 
 boost::filesystem::path GetPidFile()

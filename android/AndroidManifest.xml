@@ -1,5 +1,8 @@
 <?xml version="1.0"?>
 <manifest package="org.purplei2p.gostcoin" xmlns:android="http://schemas.android.com/apk/res/android" android:versionName="1.0" android:versionCode="1" android:installLocation="auto">
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.STORAGE"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <application android:hardwareAccelerated="true" android:name="org.qtproject.qt5.android.bindings.QtApplication" android:label="GostCoin">
         <!-- <activity android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|layoutDirection|locale|fontScale|keyboard|keyboardHidden|navigation"
         -->
@@ -48,7 +51,17 @@
             <!-- auto screen scale factor -->
         </activity>
     </application>
-    <uses-sdk android:minSdkVersion="9" android:targetSdkVersion="25"/>
+
+<!--
+короче временный фикс такой - установить target api в 22
+
+стояло 23, в апи23 появились рантайм пермиссии. и их нужно вызывать вот так:
+https://forum.qt.io/topic/72497/android-6-0-sdcard-write-permission/6
+https://bugreports.qt.io/browse/QTBUG-50759
+
+если ставишь таргет апи 25 то сегфолт на create_directory(/sdcard/gostcoin)
+-->
+    <uses-sdk android:minSdkVersion="9" android:targetSdkVersion="22"/>
     <supports-screens android:largeScreens="true" android:normalScreens="true" android:anyDensity="true" android:smallScreens="true"/>
 
     <!-- The following comment will be replaced upon deployment with default permissions based on the dependencies of the application.

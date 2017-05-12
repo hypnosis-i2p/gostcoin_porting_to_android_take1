@@ -11,6 +11,7 @@
 #include <QFile>
 #include <QDir>
 #include <QTextStream>
+#include <QDebug>
 
 #include "bitcoingui.h"
 #include "clientmodel.h"
@@ -389,6 +390,7 @@ int main(int argc, char *argv[])
             return 1;
         }
     } catch (std::exception& e) {
+        qDebug() << "error:" << e.what();
         handleRunawayException(&e);
     }
 #ifndef ANDROID

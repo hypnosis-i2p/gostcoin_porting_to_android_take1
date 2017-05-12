@@ -798,9 +798,13 @@ bool AppInit2(boost::thread_group& threadGroup)
     if (nSocksVersion != 4 && nSocksVersion != 5)
         return InitError(strprintf(_("Unknown -socks proxy version requested: %i"), nSocksVersion));
 
+    /*
     if (mapArgs.count("-onlynet")) {
         std::set<enum Network> nets;
         BOOST_FOREACH(std::string snet, mapMultiArgs["-onlynet"]) {
+#ifdef ANDROID
+            qDebug() << "ParseNetwork:" << snet.c_str();
+#endif
             enum Network net = ParseNetwork(snet);
             if (net == NET_NATIVE_I2P)
             {
@@ -824,6 +828,17 @@ bool AppInit2(boost::thread_group& threadGroup)
         SetLimited(NET_IPV6);
 #endif
 #endif
+    */
+    // listen on I2P only.
+    SoftSetBoolArg("-listen",true);
+    SoftSetBoolArg("-discover",false);
+    std::set<enum Network> nets;
+    nets.insert(Network::NET_NATIVE_I2P);
+    for (int n = 0; n < NET_MAX; n++) {
+        enum Network net = (enum Network)n;
+        if (!nets.count(net))
+            SetLimited(net);
+    }
 
     CService addrProxy;
     bool fProxy = false;
@@ -1202,10 +1217,14 @@ bool AppInit2(boost::thread_group& threadGroup)
     // InitRPCMining is needed here so getwork/getblocktemplate in the GUI debug console works properly.
     printf("before InitRPCMining()");
     InitRPCMining();
+#ifdef ANDROID
+    printf("StartRPCThreads() is disabled on Android (init.cpp)");
+#else
     if (fServer) {
         printf("before StartRPCThreads()");
         StartRPCThreads();
     }
+#endif
 
     // Generate coins in the background
     if (pwalletMain) {

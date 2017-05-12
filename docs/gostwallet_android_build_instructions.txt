@@ -29,7 +29,7 @@ cd boost_1_57_0
 chmod a+x bootstrap.sh
 ./bootstrap.sh
 
-Не закрывайте командную строку. Откройте файл C:\Android\deps\boost_1_57_0\project-config.jam в текстовом редакторе, удалите его содержимое, вставьте следующий текст:
+Не закрывайте командную строку. Откройте файл boost_1_57_0\project-config.jam в текстовом редакторе, удалите его содержимое, вставьте следующий текст:
 
 import option ;
   
@@ -39,7 +39,15 @@ option.set keep-going : false ;
 
 и сохраните файл. Вернитесь в командную строку и введите:
 
-./b2 --layout=versioned --build-type=complete --with-chrono --with-filesystem --with-program_options --with-system --with-thread toolset=gcc-arm variant=release link=static threading=multi threadapi=pthread target-os=android define=BOOST_MATH_DISABLE_FLOAT128 include=/home/user/SDKS/ANDROID/NDK/android-ndk-r13b/sources/cxx-stl/gnu-libstdc++/4.9/include include=/home/user/SDKS/ANDROID/NDK/android-ndk-r13b/sources/cxx-stl/gnu-libstdc++/4.9/libs/armeabi/include include=/home/user/SDKS/ANDROID/NDK/android-ndk-r13b/platforms/android-9/arch-arm/usr/include
+for release boost:
+
+./b2 cxxflags="-fstack-protector-all -D_FORTIFY_SOURCE=2 -std=c++11 -O0 -g" linkflags="-fstack-protector-all" --layout=versioned --build-type=complete --with-chrono --with-filesystem --with-program_options --with-system --with-thread toolset=gcc-arm variant=release link=static threading=multi threadapi=pthread target-os=android define=BOOST_MATH_DISABLE_FLOAT128 include=/home/user/SDKS/ANDROID/NDK/android-ndk-r13b/sources/cxx-stl/gnu-libstdc++/4.9/include include=/home/user/SDKS/ANDROID/NDK/android-ndk-r13b/sources/cxx-stl/gnu-libstdc++/4.9/libs/armeabi/include include=/home/user/SDKS/ANDROID/NDK/android-ndk-r13b/platforms/android-9/arch-arm/usr/include
+
+for debug boost:
+
+./b2 cxxflags="-fstack-protector-strong -DANDROID -march=armv7-a -mfloat-abi=softfp -mfpu=vfp -fno-builtin-memmove --sysroot=/home/user/SDKS/ANDROID/NDK/android-ndk-r13b/platforms/android-9/arch-arm/ -fstack-protector-all -D_FORTIFY_SOURCE=2 -std=c++11 -g -marm -O0 -std=gnu++11 -D_REENTRANT -fdiagnostics-show-option -Wall -Wextra -Wformat -Wformat-security -Wno-unused-parameter -Wstack-protector -fPIC -DQT_GUI -DBOOST_THREAD_USE_LIB -DBOOST_SPIRIT_THREADSAFE -DBOOST_NO_CXX11_SCOPED_ENUMS -DANDROID=1 -D__ANDROID__ -DANDROID_ARM7A -DUSE_IPV6=1 -DHAVE_BUILD_INFO -D_FILE_OFFSET_BITS=64 -DQT_QML_DEBUG -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB" linkflags="-fstack-protector-all" --layout=versioned --build-type=complete --with-chrono --with-filesystem --with-program_options --with-system --with-thread toolset=gcc-arm variant=debug link=static threading=multi threadapi=pthread target-os=android define=BOOST_MATH_DISABLE_FLOAT128 include=/home/user/SDKS/ANDROID/NDK/android-ndk-r13b/sources/cxx-stl/gnu-libstdc++/4.9/include include=/path/to/libraries/OpenSSL-for-Android-Prebuilt/openssl-1.0.2/include include=/home/user/SDKS/Qt/5.6.2_android/5.6/android_armv7/mkspecs/android-g++ include=/home/user/SDKS/ANDROID/NDK/android-ndk-r13b/sources/cxx-stl/gnu-libstdc++/4.9/libs/armeabi-v7a/include include=/home/user/SDKS/ANDROID/NDK/android-ndk-r13b/platforms/android-9/arch-arm/usr/include
+
+see also: http://stackoverflow.com/a/19470480/529442
 
 ********************************
 
