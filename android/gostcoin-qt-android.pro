@@ -29,15 +29,13 @@ android {
         MAIN_PATH = /path/to/libraries
         # change to your own Android NDK path
         NDK_PATH = /home/user/SDKS/ANDROID/NDK/android-ndk-r13b
-        #boost 53, 62 are not ok
-        #change to your boost 1.64.0 path
-        BOOST_PATH = $$MAIN_PATH/boost_1_64_0
 
         # git clone https://github.com/PurpleI2P/Boost-for-Android-Prebuilt.git
         # git clone https://github.com/PurpleI2P/OpenSSL-for-Android-Prebuilt.git
         # git clone https://github.com/PurpleI2P/MiniUPnP-for-Android-Prebuilt.git
         # git clone https://github.com/PurpleI2P/android-ifaddrs.git
-        #BOOST_PATH = $$MAIN_PATH/Boost-for-Android-Prebuilt
+        #boost 53, 62 are not ok
+        BOOST_PATH = $$MAIN_PATH/Boost-for-Android-Prebuilt/boost_1_64_0
         OPENSSL_PATH = $$MAIN_PATH/OpenSSL-for-Android-Prebuilt/openssl-1.0.2
         #MINIUPNP_PATH = $$MAIN_PATH/MiniUPnP-for-Android-Prebuilt
         IFADDRS_PATH = $$MAIN_PATH/android-ifaddrs
@@ -52,7 +50,7 @@ android {
 
         INCLUDEPATH += \
                 $$NDK_PATH/sources/cxx-stl/gnu-libstdc++/4.9/include \
-                $$BOOST_PATH \
+                $$BOOST_PATH/include \
                 $$OPENSSL_PATH/include \
                 $$IFADDRS_PATH \
                 $$BDB_PATH \
@@ -76,13 +74,13 @@ android {
 #                        -L$$OPENSSL_PATH/armeabi-v7a/lib/ -lcrypto -lssl
 #\
 #			-L$$MINIUPNP_PATH/miniupnp-2.0/armeabi-v7a/lib/ -lminiupnpc
-                LIBS += -L$$BOOST_PATH/stage/lib \
-                        -lboost_atomic-gcc-mt-sd-1_64 \
-                        -lboost_chrono-gcc-mt-sd-1_64 \
-                        -lboost_filesystem-gcc-mt-sd-1_64 \
-                        -lboost_program_options-gcc-mt-sd-1_64 \
-                        -lboost_system-gcc-mt-sd-1_64 \
-                        -lboost_thread-gcc-mt-sd-1_64 \
+                LIBS += -L$$BOOST_PATH/armeabi-v7a/lib \
+                        -lboost_atomic \
+                        -lboost_chrono \
+                        -lboost_filesystem \
+                        -lboost_program_options \
+                        -lboost_system \
+                        -lboost_thread \
                         -L$$OPENSSL_PATH/armeabi-v7a/lib/ -lcrypto -lssl
 #\
 #			-L$$MINIUPNP_PATH/miniupnp-2.0/armeabi-v7a/lib/ -lminiupnpc
