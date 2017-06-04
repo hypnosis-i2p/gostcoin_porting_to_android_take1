@@ -1816,7 +1816,9 @@ void static Discover()
     // Get local host ip
     struct ifaddrs* __attribute__ ((aligned)) myaddrs;
     printf("before getifaddrs\n");
+#ifdef ANDROID
     qDebug() << "before getifaddrs";
+#endif
     if (getifaddrs(&myaddrs) == 0)
     {
         printf("before for ifa\n");
