@@ -214,9 +214,10 @@ HEADERS += src/qt/bitcoingui.h \
     src/qt/splashscreen.h \
     src/qt/showi2paddresses.h \
     src/qt/i2poptionswidget.h \
-    src/qt/setupdarknet.h \
     src/qt/TxViewDelegate.h \
-    src/LOGSTREAM.h
+    src/LOGSTREAM.h \
+    src/qt/i2poptionswidget.h \
+    src/qt/setupdarknet.h
 
 SOURCES += src/qt/gostcoin.cpp \
     src/qt/bitcoingui.cpp \
