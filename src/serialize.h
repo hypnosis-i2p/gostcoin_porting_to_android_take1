@@ -20,7 +20,9 @@
 #include <boost/tuple/tuple_io.hpp>
 
 #include "allocators.h"
+#include "LOGSTREAM.h"
 #include "version.h"
+
 
 typedef long long  int64;
 typedef unsigned long long  uint64;
@@ -858,6 +860,22 @@ public:
         nVersion = nVersionIn;
         state = 0;
         exceptmask = std::ios::badbit | std::ios::failbit;
+    }
+
+    void dbgPrintAll() {
+        LOGSTREAM << "CDataStream length: " << vch.size() << ", contents: { ";
+        unsigned int bytesPrinted=0;
+        for (vector_type::const_iterator it=vch.begin();it!=vch.end();++it) {
+            if(bytesPrinted>=200)break;
+        	unsigned char c = (unsigned char) *it;
+        	static char HEX_DIGITS[]="0123456789abcdef";
+        	LOGSTREAM << HEX_DIGITS[(c >> 4) & 15] << HEX_DIGITS[c & 15];
+        	if((c>=32)&&(c<128))LOGSTREAM << "='" << c << "'";
+        	LOGSTREAM << " ";
+        	++bytesPrinted;
+        }
+        if(bytesPrinted<size())LOGSTREAM<<"... ";
+        LOGSTREAM << "}";
     }
 
     CDataStream& operator+=(const CDataStream& b)

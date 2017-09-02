@@ -10,22 +10,15 @@
 #include "guiutil.h"
 #include "guiconstants.h"
 
-#include <QAbstractItemDelegate>
-#include <QPainter>
-
 #define DECORATION_SIZE 64
 #define NUM_ITEMS 3
 
-class TxViewDelegate : public QAbstractItemDelegate
-{
-    Q_OBJECT
-public:
-    TxViewDelegate(): QAbstractItemDelegate(), unit(BitcoinUnits::BTC)
+TxViewDelegate::TxViewDelegate(): QAbstractItemDelegate(), unit(BitcoinUnits::BTC)
     {
 
     }
 
-    inline void paint(QPainter *painter, const QStyleOptionViewItem &option,
+void TxViewDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option,
                       const QModelIndex &index ) const
     {
         painter->save();
@@ -81,16 +74,10 @@ public:
         painter->restore();
     }
 
-    inline QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const
+QSize TxViewDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const
     {
         return QSize(DECORATION_SIZE, DECORATION_SIZE);
     }
-
-    int unit;
-
-};
-
-#include "overviewpage.moc"
 
 OverviewPage::OverviewPage(QWidget *parent) :
     QWidget(parent),
@@ -212,3 +199,7 @@ void OverviewPage::showOutOfSyncWarning(bool fShow)
     ui->labelWalletStatus->setVisible(fShow);
     ui->labelTransactionsStatus->setVisible(fShow);
 }
+
+//#include "overviewpage.moc"
+#include "moc_overviewpage.cpp"
+

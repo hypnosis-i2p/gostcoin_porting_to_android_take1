@@ -186,6 +186,7 @@ HEADERS += src/qt/bitcoingui.h \
     src/qt/walletframe.h \
     src/bitcoinrpc.h \
     src/qt/overviewpage.h \
+    src/qt/overviewpage.cpp \
     src/qt/csvmodelwriter.h \
     src/crypter.h \
     src/qt/sendcoinsentry.h \
@@ -199,6 +200,7 @@ HEADERS += src/qt/bitcoingui.h \
     src/allocators.h \
     src/ui_interface.h \
     src/qt/rpcconsole.h \
+    src/qt/rpcconsole.cpp \
     src/i2p.h \
     src/Gost.h \
     src/version.h \
@@ -212,7 +214,9 @@ HEADERS += src/qt/bitcoingui.h \
     src/qt/splashscreen.h \
     src/qt/showi2paddresses.h \
     src/qt/i2poptionswidget.h \
-    src/qt/setupdarknet.h
+    src/qt/setupdarknet.h \
+    src/qt/TxViewDelegate.h \
+    src/LOGSTREAM.h
 
 SOURCES += src/qt/gostcoin.cpp \
     src/qt/bitcoingui.cpp \
@@ -288,7 +292,8 @@ SOURCES += src/qt/gostcoin.cpp \
     src/qt/showi2paddresses.cpp \
     src/qt/i2poptionswidget.cpp \
     src/qt/setupdarknet.cpp \
-    i2psam/i2psam.cpp
+    i2psam/i2psam.cpp \
+    src/qt/TxViewDelegate.cpp
 
 RESOURCES += src/qt/bitcoin.qrc
 
@@ -430,7 +435,7 @@ macx:QMAKE_CXXFLAGS_THREAD += -pthread
 macx:QMAKE_INFO_PLIST = share/qt/Info.plist
 
 # Set libraries and includes at end, to use platform-defined defaults if not overridden
-INCLUDEPATH += $$BOOST_INCLUDE_PATH $$BDB_INCLUDE_PATH $$OPENSSL_INCLUDE_PATH $$QRENCODE_INCLUDE_PATH
+INCLUDEPATH += $$BOOST_INCLUDE_PATH $$BDB_INCLUDE_PATH $$OPENSSL_INCLUDE_PATH $$QRENCODE_INCLUDE_PATH build
 LIBS += $$join(BOOST_LIB_PATH,,-L,) $$join(BDB_LIB_PATH,,-L,) $$join(OPENSSL_LIB_PATH,,-L,) $$join(QRENCODE_LIB_PATH,,-L,)
 LIBS += -lssl -lcrypto -ldb_cxx$$BDB_LIB_SUFFIX -lz
 # -lgdi32 has to happen after -lcrypto (see  #681)
@@ -450,3 +455,6 @@ contains(RELEASE, 1) {
 
 
 system($$QMAKE_LRELEASE -silent $$TRANSLATIONS)
+
+system(moc -DQT_GUI -DBOOST_THREAD_USE_LIB -DBOOST_SPIRIT_THREADSAFE -DUSE_QRCODE -DUSE_UPNP=1 -DSTATICLIB -DUSE_DBUS -DUSE_IPV6=1 -DHAVE_BUILD_INFO -DLINUX -D_FILE_OFFSET_BITS=64 -DQT_NO_DEBUG -DQT_DBUS_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB -DQT_SHARED -I $$INCLUDEPATH -Isrc -Isrc/json -Isrc/qt -Ibuild -Ibuild src/qt/overviewpage.cpp -o build/overviewpage.moc)
+system(moc -DQT_GUI -DBOOST_THREAD_USE_LIB -DBOOST_SPIRIT_THREADSAFE -DUSE_QRCODE -DUSE_UPNP=1 -DSTATICLIB -DUSE_DBUS -DUSE_IPV6=1 -DHAVE_BUILD_INFO -DLINUX -D_FILE_OFFSET_BITS=64 -DQT_NO_DEBUG -DQT_DBUS_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB -DQT_SHARED -I/usr/share/qt4/mkspecs/linux-g++-64 -I/usr/include/qt4/QtCore -I/usr/include/qt4/QtNetwork -I/usr/include/qt4/QtGui -I/usr/include/qt4/QtDBus -I/usr/include/qt4 -Isrc -Isrc/json -Isrc/qt -Ibuild -Ibuild src/qt/rpcconsole.cpp -o build/rpcconsole.moc)

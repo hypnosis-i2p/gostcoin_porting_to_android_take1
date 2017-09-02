@@ -16,6 +16,8 @@
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
 
+#include "LOGSTREAM.h"
+
 using namespace std;
 using namespace boost;
 
@@ -3348,8 +3350,8 @@ void static ProcessGetData(CNode* pfrom)
 bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 {
     RandAddSeedPerfmon();
-    if (fDebug)
-        printf("received: %s (%" PRIszu " bytes)\n", strCommand.c_str(), vRecv.size());
+    //if (fDebug)
+    LOGSTREAM << "received: " <<strCommand<<" (" << vRecv.size() << " bytes)\n";
     if (mapArgs.count("-dropmessagestest") && GetRand(atoi(mapArgs["-dropmessagestest"])) == 0)
     {
         printf("dropmessagestest DROPPING RECV MESSAGE\n");
@@ -3362,6 +3364,8 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
     if (strCommand == "version")
     {
+    	LOGSTREAM << "processing version msg\n";
+
         // Each connection can only send one version message
         if (pfrom->nVersion != 0)
         {
@@ -3386,8 +3390,10 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             pfrom->nVersion = 300;
         if (!vRecv.empty())
             vRecv >> addrFrom >> nNonce;
-        if (!vRecv.empty())
+        if (!vRecv.empty()) {
             vRecv >> pfrom->strSubVer;
+            LOGSTREAM << "version packet from "<<pfrom->strSubVer<<"\n";
+        }
         if (!vRecv.empty())
             vRecv >> pfrom->nStartingHeight;
         if (!vRecv.empty())
@@ -3657,9 +3663,12 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
     else if (strCommand == "getheaders")
     {
+        LOGSTREAM << "received cmd getheaders\n";
+
         CBlockLocator locator;
         uint256 hashStop;
         vRecv >> locator >> hashStop;
+        LOGSTREAM << "hashStop: " << hashStop.ToString().c_str() << "\n";
 
         CBlockIndex* pindex = NULL;
         if (locator.IsNull())
@@ -3681,7 +3690,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         // we must use CBlocks, as CBlockHeaders won't include the 0x00 nTx count at the end
         vector<CBlock> vHeaders;
         int nLimit = 2000;
-        printf("getheaders %d to %s\n", (pindex ? pindex->nHeight : -1), hashStop.ToString().c_str());
+        LOGSTREAM << "getheaders "<<(pindex ? pindex->nHeight : -1)<<" to "<<hashStop.ToString().c_str()<<"\n";
         for (; pindex; pindex = pindex->pnext)
         {
             vHeaders.push_back(pindex->GetBlockHeader());
@@ -3952,7 +3961,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 bool ProcessMessages(CNode* pfrom)
 {
     //if (fDebug)
-    //    printf("ProcessMessages(%zu messages)\n", pfrom->vRecvMsg.size());
+    LOGSTREAM<<"ProcessMessages("<<pfrom->vRecvMsg.size()<<" messages)\n";
 
     //
     // Message format
@@ -3980,9 +3989,11 @@ bool ProcessMessages(CNode* pfrom)
         CNetMessage& msg = *it;
 
         //if (fDebug)
-        //    printf("ProcessMessages(message %u msgsz, %zu bytes, complete:%s)\n",
-        //            msg.hdr.nMessageSize, msg.vRecv.size(),
-        //            msg.complete() ? "Y" : "N");
+        LOGSTREAM<<"ProcessMessages(message "<<msg.hdr.nMessageSize<<" msgsz, "<<msg.vRecv.size()<<" bytes, complete:"<<
+                    (msg.complete() ? "Y" : "N")<<", cmd: '"<<msg.hdr.GetCommand().c_str()<<"', body: ";
+        msg.vRecv.dbgPrintAll();
+        LOGSTREAM<<")\n";
+        //ProcessMessages(message 115 msgsz, 115 bytes, complete:Y, cmd: 'version', body: CDataStream length: 115, contents: { 77='w' 11 01 00 01 00 00 00 00 00 00 00 70='p' 8f 3b=';' 59='Y' 00 00 00 00 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ff ff 7f='' 00 00 01 24='$' a1 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ff ff 7f='' 00 00 01 c0 68='h' 2d='-' aa c7 bf 16 f4 ed 0a 1e '/P2Pool:16.0-' 34='4' 2d='-' 67='g' 64='d' 65='e' 31='1' 62='b' 65='e' 33='3' 30='0' 2d='-' 64='d' 69='i' 72='r' 74='t' 79='y' 2f='/' 00 00 00 00 })
 
         // end, if an incomplete message is found
         if (!msg.complete())
@@ -3993,7 +4004,7 @@ bool ProcessMessages(CNode* pfrom)
 
         // Scan for message start
         if (memcmp(msg.hdr.pchMessageStart, pchMessageStart, sizeof(pchMessageStart)) != 0) {
-            printf("\n\nPROCESSMESSAGE: INVALID MESSAGESTART\n\n");
+            LOGSTREAM<<"\n\nPROCESSMESSAGE: INVALID MESSAGESTART\n\n";
             fOk = false;
             break;
         }
@@ -4002,7 +4013,7 @@ bool ProcessMessages(CNode* pfrom)
         CMessageHeader& hdr = msg.hdr;
         if (!hdr.IsValid())
         {
-            printf("\n\nPROCESSMESSAGE: ERRORS IN HEADER %s\n\n\n", hdr.GetCommand().c_str());
+            LOGSTREAM<<"\n\nPROCESSMESSAGE: ERRORS IN HEADER "<<hdr.GetCommand().c_str()<<"\n\n\n";
             continue;
         }
         string strCommand = hdr.GetCommand();
@@ -4017,8 +4028,13 @@ bool ProcessMessages(CNode* pfrom)
         memcpy(&nChecksum, &hash, sizeof(nChecksum));
         if (nChecksum != hdr.nChecksum)
         {
-            printf("ProcessMessages(%s, %u bytes) : CHECKSUM ERROR nChecksum=%08x hdr.nChecksum=%08x\n",
-               strCommand.c_str(), nMessageSize, nChecksum, hdr.nChecksum);
+            LOGSTREAM <<"ProcessMessages("<<strCommand.c_str()<<", "<<nMessageSize<<
+                        " bytes) : CHECKSUM ERROR nChecksum=";
+            hex(LOGSTREAM);
+            LOGSTREAM<<nChecksum;
+            LOGSTREAM<<" hdr.nChecksum=";
+            hex(LOGSTREAM);
+            LOGSTREAM<<hdr.nChecksum<<"\n";
             continue;
         }
 

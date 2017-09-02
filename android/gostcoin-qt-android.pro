@@ -477,3 +477,6 @@ android {
         ../docs/gostwallet_android_build_instructions.txt
 }
 
+DISTFILES += \
+    ../docs/gostwallet_android_build_instructions.txt
+

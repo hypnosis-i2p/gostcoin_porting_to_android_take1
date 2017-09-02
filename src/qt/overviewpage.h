@@ -2,6 +2,9 @@
 #define OVERVIEWPAGE_H
 
 #include <QWidget>
+#include <QObject>
+#include <QAbstractItemDelegate>
+#include <QPainter>
 
 namespace Ui {
     class OverviewPage;
@@ -49,6 +52,21 @@ private slots:
     void updateDisplayUnit();
     void handleTransactionClicked(const QModelIndex &index);
     void updateAlerts(const QString &warnings);
+};
+
+class TxViewDelegate : public QAbstractItemDelegate
+{
+    Q_OBJECT
+public:
+    TxViewDelegate();
+
+    void paint(QPainter *painter, const QStyleOptionViewItem &option,
+                      const QModelIndex &index ) const;
+
+    QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const;
+
+    int unit;
+
 };
 
 #endif // OVERVIEWPAGE_H

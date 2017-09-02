@@ -160,6 +160,7 @@ public:
     // socket
     uint64 nServices;
     SOCKET hSocket;
+    int port;
 
     CDataStream ssSend;
     size_t nSendSize; // total size of all vSendMsg entries
@@ -226,13 +227,15 @@ public:
     CCriticalSection cs_inventory;
     std::multimap<int64, CInv> mapAskFor;
 
-    CNode(SOCKET hSocketIn, CAddress addrIn, std::string addrNameIn = "", bool fInboundIn=false) : ssSend(SER_NETWORK, INIT_PROTO_VERSION)
+    CNode(int port_, SOCKET hSocketIn, CAddress addrIn, std::string addrNameIn = "", bool fInboundIn=false) :
+    	ssSend(SER_NETWORK, INIT_PROTO_VERSION)
       , nSendStreamType(SER_NETWORK | (((addrIn.nServices & NODE_I2P) || addrIn.IsNativeI2P()) ? 0 : SER_IPADDRONLY))
       , nRecvStreamType(SER_NETWORK | (((addrIn.nServices & NODE_I2P) || addrIn.IsNativeI2P()) ? 0 : SER_IPADDRONLY))
     {
         ssSend.SetType(nSendStreamType);
         nServices = 0;
         hSocket = hSocketIn;
+        port=port_;
         nRecvVersion = INIT_PROTO_VERSION;
         nLastSend = 0;
         nLastRecv = 0;

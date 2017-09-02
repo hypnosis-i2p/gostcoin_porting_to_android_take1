@@ -18,6 +18,7 @@
 #include <string.h>
 #endif
 
+#include "LOGSTREAM.h"
 
 // Dump addresses to peers.dat every 15 minutes (900s)
 #define DUMP_ADDRESSES_INTERVAL 900
@@ -507,7 +508,9 @@ CNode* ConnectNode(CAddress addrConnect, const char *pszDest)
 
     // Connect
     SOCKET hSocket;
-    if (pszDest ? ConnectSocketByName(addrConnect, hSocket, pszDest, GetDefaultPort()) : ConnectSocket(addrConnect, hSocket))
+    int port=-1;
+    if (pszDest ? ConnectSocketByName(addrConnect, hSocket, pszDest, port=GetDefaultPort()) :
+    		ConnectSocket(addrConnect, hSocket))
     {
         addrman.Attempt(addrConnect);
 
@@ -525,7 +528,7 @@ CNode* ConnectNode(CAddress addrConnect, const char *pszDest)
 #endif
 
         // Add node
-        CNode* pnode = new CNode(hSocket, addrConnect, pszDest ? pszDest : "", false);
+        CNode* pnode = new CNode(port, hSocket, addrConnect, pszDest ? pszDest : "", false);
         pnode->AddRef();
 
         {
@@ -718,7 +721,7 @@ void AddIncomingConnection(SOCKET hSocket, const CAddress& addr)
     else
     {
         printf("accepted connection %s\n", addr.ToString().c_str());
-        CNode* pnode = new CNode(hSocket, addr, "", true);
+        CNode* pnode = new CNode(-2, hSocket, addr, "", true);
         pnode->AddRef();
         {
             LOCK(cs_vNodes);
@@ -999,7 +1002,7 @@ void ThreadSocketHandler()
         //
         // Accept new connections
         //
-        if (!IsI2POnly())
+        //if (!IsI2POnly())
         BOOST_FOREACH(SOCKET hListenSocket, vhListenSocket)
         if (hListenSocket != INVALID_SOCKET && FD_ISSET(hListenSocket, &fdsetRecv))
         {
@@ -1040,17 +1043,26 @@ void ThreadSocketHandler()
             }
             else if (CNode::IsBanned(addr))
             {
-                printf("connection from %s dropped (banned)\n", addr.ToString().c_str());
+            	LOGSTREAM <<  "connection from "<<addr.ToString().c_str()<<" dropped (banned)\n";
                 closesocket(hSocket);
             }
             else
             {
-                printf("accepted connection %s\n", addr.ToString().c_str());
-                CNode* pnode = new CNode(hSocket, addr, "", true);
-                pnode->AddRef();
-                {
-                    LOCK(cs_vNodes);
-                    vNodes.push_back(pnode);
+                LOGSTREAM << "accepted connection " << addr.ToString().c_str() << "\n";
+                //accepted connection 127.0.0.1:48394
+                if(IsI2POnly()){
+                	//ignore connections from non-localhost in I2POnly mode
+                	bool isLocalhost = addr.IsLocal();
+                	if(isLocalhost) {
+                        CNode* pnode = new CNode(-2, hSocket, addr, "", true);
+                        pnode->AddRef();
+                        {
+                            LOCK(cs_vNodes);
+                            vNodes.push_back(pnode);
+                        }
+                	}
+                	//else ignore it, let it be hanging
+                	//Use firewalls to disallow connections from outside to protect from possible DDoS
                 }
             }
         }
@@ -1875,7 +1887,7 @@ void StartNode(boost::thread_group& threadGroup)
 
     if (pnodeLocalHost == NULL) {
         printf("before new CNode\n");
-        pnodeLocalHost = new CNode(INVALID_SOCKET, CAddress(CService("127.0.0.1", 0), nLocalServices));
+        pnodeLocalHost = new CNode(-3, INVALID_SOCKET, CAddress(CService("127.0.0.1", 0), nLocalServices));
     }
 
     printf("before Discover()\n");

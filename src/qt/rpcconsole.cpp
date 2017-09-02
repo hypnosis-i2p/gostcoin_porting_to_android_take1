@@ -5,6 +5,7 @@
 #include "bitcoinrpc.h"
 #include "guiutil.h"
 
+#include <QObject>
 #include <QTime>
 #include <QThread>
 #include <QKeyEvent>
@@ -32,21 +33,6 @@ const struct {
     {"misc", ":/icons/tx_inout"},
     {NULL, NULL}
 };
-
-/* Object for executing console RPC commands in a separate thread.
-*/
-class RPCExecutor : public QObject
-{
-    Q_OBJECT
-
-public slots:
-    void request(const QString &command);
-
-signals:
-    void reply(int category, const QString &command);
-};
-
-#include "rpcconsole.moc"
 
 /**
  * Split shell command line into a list of arguments. Aims to emulate \c bash and friends.
@@ -427,3 +413,7 @@ void RPCConsole::on_showCLOptionsButton_clicked()
     GUIUtil::HelpMessageBox help;
     help.exec();
 }
+
+//#include "rpcconsole.moc"
+#include "moc_rpcconsole.cpp"
+
