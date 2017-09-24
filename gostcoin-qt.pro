@@ -213,7 +213,6 @@ HEADERS += src/qt/bitcoingui.h \
     src/qt/macnotificationhandler.h \
     src/qt/splashscreen.h \
     src/qt/showi2paddresses.h \
-    src/qt/i2poptionswidget.h \
     src/qt/TxViewDelegate.h \
     src/LOGSTREAM.h \
     src/qt/i2poptionswidget.h \
@@ -294,7 +293,8 @@ SOURCES += src/qt/gostcoin.cpp \
     src/qt/i2poptionswidget.cpp \
     src/qt/setupdarknet.cpp \
     i2psam/i2psam.cpp \
-    src/qt/TxViewDelegate.cpp
+    src/qt/TxViewDelegate.cpp \
+    src/qt/setupdarknet.cpp
 
 RESOURCES += src/qt/bitcoin.qrc
 
@@ -457,5 +457,5 @@ contains(RELEASE, 1) {
 
 system($$QMAKE_LRELEASE -silent $$TRANSLATIONS)
 
-system(moc -DQT_GUI -DBOOST_THREAD_USE_LIB -DBOOST_SPIRIT_THREADSAFE -DUSE_QRCODE -DUSE_UPNP=1 -DSTATICLIB -DUSE_DBUS -DUSE_IPV6=1 -DHAVE_BUILD_INFO -DLINUX -D_FILE_OFFSET_BITS=64 -DQT_NO_DEBUG -DQT_DBUS_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB -DQT_SHARED -I $$INCLUDEPATH -Isrc -Isrc/json -Isrc/qt -Ibuild -Ibuild src/qt/overviewpage.cpp -o build/overviewpage.moc)
-system(moc -DQT_GUI -DBOOST_THREAD_USE_LIB -DBOOST_SPIRIT_THREADSAFE -DUSE_QRCODE -DUSE_UPNP=1 -DSTATICLIB -DUSE_DBUS -DUSE_IPV6=1 -DHAVE_BUILD_INFO -DLINUX -D_FILE_OFFSET_BITS=64 -DQT_NO_DEBUG -DQT_DBUS_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB -DQT_SHARED -I/usr/share/qt4/mkspecs/linux-g++-64 -I/usr/include/qt4/QtCore -I/usr/include/qt4/QtNetwork -I/usr/include/qt4/QtGui -I/usr/include/qt4/QtDBus -I/usr/include/qt4 -Isrc -Isrc/json -Isrc/qt -Ibuild -Ibuild src/qt/rpcconsole.cpp -o build/rpcconsole.moc)
+#system(moc -DQT_GUI -DBOOST_THREAD_USE_LIB -DBOOST_SPIRIT_THREADSAFE -DUSE_QRCODE -DUSE_UPNP=1 -DSTATICLIB -DUSE_DBUS -DUSE_IPV6=1 -DHAVE_BUILD_INFO -DLINUX -D_FILE_OFFSET_BITS=64 -DQT_NO_DEBUG -DQT_DBUS_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB -DQT_SHARED -I $$INCLUDEPATH -Isrc -Isrc/json -Isrc/qt -Ibuild -Ibuild src/qt/overviewpage.cpp -o build/overviewpage.moc)
+#system(moc -DQT_GUI -DBOOST_THREAD_USE_LIB -DBOOST_SPIRIT_THREADSAFE -DUSE_QRCODE -DUSE_UPNP=1 -DSTATICLIB -DUSE_DBUS -DUSE_IPV6=1 -DHAVE_BUILD_INFO -DLINUX -D_FILE_OFFSET_BITS=64 -DQT_NO_DEBUG -DQT_DBUS_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB -DQT_SHARED -I/usr/share/qt4/mkspecs/linux-g++-64 -I/usr/include/qt4/QtCore -I/usr/include/qt4/QtNetwork -I/usr/include/qt4/QtGui -I/usr/include/qt4/QtDBus -I/usr/include/qt4 -Isrc -Isrc/json -Isrc/qt -Ibuild -Ibuild src/qt/rpcconsole.cpp -o build/rpcconsole.moc)

@@ -1254,7 +1254,7 @@ static const char *strMainNetDNSSeed[][2] = {
 };
 
 static const char *strTestNetDNSSeed[][2] = {
-	{"gostco.in", "dnsseed.gostco.in"},	
+    //{"gostco.in", "dnsseed.gostco.in"},
     {NULL, NULL}
 };
 
